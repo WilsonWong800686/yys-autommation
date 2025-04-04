@@ -58,7 +58,15 @@ class YuhunAutomation:
         
     def run(self, template_configs: Dict[str, Dict], stop_event: threading.Event, pause_event: threading.Event):
         """运行御魂自动化"""
+        # 添加最大执行时间限制
+        max_run_time = 5  # 最长5秒
+        start_time = time.time()
+        
         while not stop_event.is_set():
+            # 检查是否超过最大执行时间
+            if time.time() - start_time > max_run_time:
+                return  # 超过最大执行时间，退出本次run调用
+                
             try:
                 # 检查是否需要暂停
                 if pause_event.is_set():
@@ -95,6 +103,10 @@ class YuhunAutomation:
                 # 检查其他按钮
                 clicked = False
                 for template_name in self.clicker.get_template_names():
+                    # 再次检查是否超时
+                    if time.time() - start_time > max_run_time:
+                        return  # 超过最大执行时间，退出本次run调用
+                        
                     if stop_event.is_set() or pause_event.is_set():
                         break
                         
@@ -113,11 +125,17 @@ class YuhunAutomation:
                         
                         # 特殊处理button7
                         elif template_name == "button7":
+                            # 检查是否会超时
                             wait_time = random.uniform(self.clicker.button7_wait_range[0], self.clicker.button7_wait_range[1])
+                            if time.time() - start_time + wait_time > max_run_time:
+                                return  # 等待会导致超时，所以直接返回
                             time.sleep(wait_time)
                             if self.clicker.random_click(x, y, template_name):
                                 logger.info(f"{datetime.now().strftime('%H:%M:%S')} - {self.device_info} 点击 button7")
                                 clicked = True
+                                # 检查延迟是否会导致超时
+                                if time.time() - start_time + 1 > max_run_time:  # 假设延迟最多1秒
+                                    return
                                 self.clicker.random_delay(template_name)
                                 break
                         
@@ -125,6 +143,9 @@ class YuhunAutomation:
                         else:
                             if self.clicker.random_click(x, y, template_name):
                                 clicked = True
+                                # 检查延迟是否会导致超时
+                                if time.time() - start_time + 1 > max_run_time:  # 假设延迟最多1秒
+                                    return
                                 self.clicker.random_delay(template_name)
                                 break
                 
@@ -167,17 +188,23 @@ class DeviceThread(threading.Thread):
             
             while not self.stop_event.is_set():
                 current_time = datetime.now()
+                # 强制检查运行时间，确保不会超过设定时间
                 if current_time >= end_time:
                     logger.info(f"设备 {self.device_info} 已达到预定运行时间，停止运行")
                     self.stop_event.set()
                     break
                     
                 remaining_minutes = (end_time - current_time).total_seconds() / 60
-                if int(remaining_minutes) % 10 == 0:  # 每10分钟显示一次剩余时间
+                if int(remaining_minutes) % 10 == 0 and int(remaining_minutes) > 0:  # 每10分钟显示一次剩余时间
                     logger.info(f"设备 {self.device_info} 剩余运行时间: {int(remaining_minutes)} 分钟")
                 
-                # 运行御魂自动化
+                # 运行御魂自动化，但限制单次运行时间，确保能及时检查是否到达结束时间
+                start_run = datetime.now()
                 self.automation.run(self.template_configs, self.stop_event, self.pause_event)
+                # 如果运行时间过长，添加日志记录
+                run_time = (datetime.now() - start_run).total_seconds()
+                if run_time > 30:  # 如果单次运行超过30秒，记录日志
+                    logger.warning(f"设备 {self.device_info} 单次运行耗时 {run_time:.2f} 秒，可能影响时间控制")
                 
         except Exception as e:
             logger.error(f"设备 {self.device_info} 线程运行出错: {str(e)}")
@@ -1066,7 +1093,19 @@ def main():
         show_control_panel()
         
         # 主控制循环
+        start_time = datetime.now()
+        end_time = start_time + timedelta(minutes=run_duration)
+        print(f"\n程序开始运行时间: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"预计结束时间: {end_time.strftime('%Y-%m-%d %H:%M:%S')}")
+        
         while not stop_event.is_set():
+            # 检查是否已达到预定运行时间
+            current_time = datetime.now()
+            if current_time >= end_time:
+                print(f"\n已达到预定运行时间 {run_duration} 分钟，正在停止所有设备...")
+                stop_event.set()
+                break
+                
             if msvcrt.kbhit():
                 try:
                     key = msvcrt.getch().decode('utf-8').lower()
