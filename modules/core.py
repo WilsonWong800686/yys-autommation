@@ -93,9 +93,9 @@ class DeviceManager:
     def restart_adb_server(self) -> bool:
         """重启ADB服务器"""
         try:
-            subprocess.run([self.adb_path, "kill-server"], check=True)
+            subprocess.run([self.adb_path, "kill-server"], check=True, encoding='utf-8', errors='ignore')
             time.sleep(1)
-            subprocess.run([self.adb_path, "start-server"], check=True)
+            subprocess.run([self.adb_path, "start-server"], check=True, encoding='utf-8', errors='ignore')
             time.sleep(2)
             return True
         except Exception as e:
@@ -105,7 +105,7 @@ class DeviceManager:
     def disconnect_all(self) -> None:
         """断开所有设备连接"""
         try:
-            subprocess.run([self.adb_path, "disconnect"], check=True)
+            subprocess.run([self.adb_path, "disconnect"], check=True, encoding='utf-8', errors='ignore')
         except Exception as e:
             logger.error(f"断开所有设备连接失败: {str(e)}")
             
@@ -124,7 +124,9 @@ class DeviceManager:
                 [self.adb_path, "devices"], 
                 capture_output=True, 
                 text=True, 
-                check=True
+                check=True,
+                encoding='utf-8',
+                errors='ignore'
             )
             
             device_lines = result.stdout.strip().split('\n')[1:]
@@ -146,7 +148,9 @@ class DeviceManager:
                     connect_result = subprocess.run(
                         [self.adb_path, "connect", device_id], 
                         capture_output=True, 
-                        text=True
+                        text=True,
+                        encoding='utf-8',
+                        errors='ignore'
                     )
                     if "connected" in connect_result.stdout:
                         # 获取设备信息
@@ -154,7 +158,9 @@ class DeviceManager:
                             model_result = subprocess.run(
                                 [self.adb_path, "-s", device_id, "shell", "getprop ro.product.model"], 
                                 capture_output=True, 
-                                text=True
+                                text=True,
+                                encoding='utf-8',
+                                errors='ignore'
                             )
                             model = model_result.stdout.strip() or f"未知设备"
                             self.devices.append((device_id, f"{model} ({device_id})"))
@@ -248,13 +254,17 @@ class ImageProcessor:
             # 使用ADB截图
             subprocess.run(
                 [self.device_manager.adb_path, "-s", device_id, "shell", "screencap", "-p", "/sdcard/screen.png"],
-                check=True
+                check=True,
+                encoding='utf-8',
+                errors='ignore'
             )
             
             # 将截图拉取到本地
             subprocess.run(
                 [self.device_manager.adb_path, "-s", device_id, "pull", "/sdcard/screen.png", "screen.png"],
-                check=True
+                check=True,
+                encoding='utf-8',
+                errors='ignore'
             )
             
             # 读取截图
@@ -348,7 +358,9 @@ class InputController:
         try:
             subprocess.run(
                 [self.device_manager.adb_path, "-s", device_id, "shell", "input", "tap", str(x), str(y)],
-                check=True
+                check=True,
+                encoding='utf-8',
+                errors='ignore'
             )
             self.last_click = (x, y, time.time())
             return True
