@@ -1,0 +1,46 @@
+{
+    "adb_path": "F:\\testclinm\\platform-tools\\adb.exe",
+    "images_dir": "images",
+    "templates": {
+        "button1": {"threshold": 0.8, "priority": 3, "delay_after": [0.5, 1.0]},
+        "button2": {"threshold": 0.8, "priority": 5, "delay_after": [0.5, 1.0]},
+        "button3": {"threshold": 0.8, "priority": 4, "delay_after": [0.5, 1.0]},
+        "button4": {"threshold": 0.8, "priority": 1, "delay_after": [0.5, 1.0]},
+        "button5": {"threshold": 0.8, "priority": 2, "delay_after": [0.5, 1.0]},
+        "button6": {"threshold": 0.8, "priority": 6, "delay_after": [0.5, 1.0]},
+        "button7": {"threshold": 0.8, "priority": 7, "delay_after": [1.0, 2.0], "wait_before": [0.5, 1.5]},
+        "button8": {"threshold": 0.8, "priority": 8, "delay_after": [0.5, 1.0]},
+        "button9": {"threshold": 0.8, "priority": 9, "delay_after": [0.5, 1.0]},
+        "button10": {"threshold": 0.8, "priority": 10, "delay_after": [0.5, 1.0]},
+        "lose": {"threshold": 0.8, "priority": 0},
+        "notupo": {"threshold": 0.8, "priority": 0}
+    },
+    "modules": {
+        "yuhun": {
+            "module_name": "御魂",
+            "enabled": true,
+            "template_sets": ["button1", "button2", "button3", "button4", "button5", "button6", "button7", "button8", "button9", "button10", "lose", "notupo"],
+            "special_logic": {
+                "notupo_check_after_button10": true,
+                "check_lose": true
+            }
+        },
+        "baigui": {
+            "module_name": "百鬼夜行",
+            "enabled": true,
+            "template_sets": ["button1", "button2", "button3"],
+            "special_logic": {}
+        }
+    },
+    "device_management": {
+        "switch_interval": 30,
+        "default_run_duration": 10,
+        "max_single_run_time": 5,
+        "check_interval": 0.1
+    },
+    "logging": {
+        "level": "INFO",
+        "format": "%(asctime)s - %(levelname)s - %(message)s",
+        "directory": "logs"
+    }
+} 
